@@ -1,6 +1,9 @@
 
+# Imports
+import sys
+
 # Variables
-help_shown = False     # Variable to track if help has been shown
+help_shown = False     # To track if help has been shown
 
 
 def help():
@@ -19,35 +22,51 @@ def help():
   
     print(usage_text)
 
+# Seperate function for processing args for readability
+# Individually goes through the valid inputs and determines what to do based on them
+def process_argument(arg):
+   
+    if arg in ["-h", "--help", "help", "h"]:
+        help()
+        return False  # Makes the system continue to run
+    
+    elif arg in ["-p", "--passive", "passive", "p"]:
+        print("Passive listening set")
+        return False  
+    
+    elif arg in ["-e", "--exit", "exit", "e"]:
+        print("Exiting the program")
+        return True  # Exits the system
+    
+    else:
+        print(f"Invalid option: {arg}. Please see options below") # F-String included to show variable arg. 
+        help()
+        return False  
 
 
 def main():
-   
-   # Call the help function only if its the first time the process is ran
+    # Initially call the help function only if its the first time the process is ran
     global help_shown
 
     if help_shown == False:
         help()
         help_shown = True
 
-   # Takes the user's input 
-    userInput = input("""
-    Please select an option: """).strip().lower() # To accept all inputs in a universal format
+        
+  # Checks command-line arguments
+    if len(sys.argv) > 1:    
+        for arg in sys.argv[1:]: # Iterate through all args (to end of list)
+            if process_argument(arg):
+                return  
 
-   # Handling the input
-    while userInput != "exit":
-        if userInput == "help" or userInput == "h":
-            help()
-        elif userInput == "passive" or userInput == "p":
-            print("""
-    Passive listening set""") 
-        else: 
-            print("""
-    Invalid option. Type 'help' for more information""")
-  
-   
-        # Ask for the next option or to exit
-        userInput = input("""
-    Please select another option or type 'exit' to quit: """).strip().lower()
+    # Interactive prompt if no arguments are provided / continuous loop until exit
+    while True:
+        user_input = input("Please select an option:  ").strip()       
+        if process_argument(user_input): # Processes the user input as if it were a command-line argument
+            break  
+
+
+
+ 
 
 main()
