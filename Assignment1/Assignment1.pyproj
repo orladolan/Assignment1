@@ -4,13 +4,15 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>4d00446d-f34a-41ca-91ea-30b625f1576d</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Assignment1.py</StartupFile>
+    <StartupFile>net_recon.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>Assignment1</Name>
     <RootNamespace>Assignment1</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +24,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Assignment1.py" />
+    <Compile Include="net_recon.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
