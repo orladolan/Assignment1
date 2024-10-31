@@ -3,7 +3,7 @@
 import sys
 import os
 import time
-from scapy.all import ARP, sniff, Ether, srp, get_if_addr, get_if_hwaddr
+from scapy.all import ARP, sniff, Ether, srp, get_if_addr, get_if_hwaddr,  get_if_list
  
 # Variables
 help_shown = False     # To track if help has been shown
@@ -27,6 +27,11 @@ def help():
   
     print(usage_text)
 
+# Error handling wrong interfaces
+def is_interface_valid(interface):
+    return interface in get_if_list()
+
+# TASK 1
 # Seperate function for processing args for readability
 # Individually goes through the valid inputs and determines what to do based on them
 def process_argument(arg):
@@ -37,11 +42,17 @@ def process_argument(arg):
     
     elif arg in ["-p", "--passive", "passive", "p"]:
        interface = input("Enter the interface to listen on (e.g., eth0): ")
+       if not is_interface_valid(interface):
+           print(f"Error: Invalid interface '{interface}'. Please provide a valid interface.")
+           return False
        passive_scan(interface)
-       return False  
+       return False   
     
     elif arg in ["-a", "--active", "active", "a"]:
        interface = input("Enter the interface to listen on (e.g., eth0): ")
+       if not is_interface_valid(interface):
+           print(f"Error: Invalid interface '{interface}'. Please provide a valid interface.")
+           return False
        active_recon(interface)
        return False 
 
