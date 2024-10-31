@@ -8,7 +8,7 @@ from scapy.all import ARP, sniff, Ether, srp, get_if_addr, get_if_hwaddr
 # Variables
 help_shown = False     # To track if help has been shown
 header_shown = False     # To track if header has been shown
-detected_ip_mac_pairs = {} # To store all unique IP and MAC pairs
+detected_ip_mac_pairs = {} # To store all unique IP and MAC pairs, and packet count
 
 def help():
     #Help Feature - prints out instructions 
@@ -57,42 +57,47 @@ def process_argument(arg):
 # TASK 2: PASSIVE RECON
 # Listens for ARP traffic
 def passive_scan(interface):
-   
-    # Handles the ARP packets 
+    # Handles the ARP packets
     def process_packet(pkt):
         global header_shown
 
         if ARP in pkt and pkt[ARP].op == 2:  # ARP reply operation code
             src_ip = pkt[ARP].psrc           # Source IP address
             src_mac = pkt[ARP].hwsrc         # Source MAC address
-            detected_ip_mac_pairs[src_ip] = src_mac
-                
-        if header_shown == False:
-            display_table_header(interface, "Passive")   
-            header_shown = True
-
-        for src_ip, src_mac in detected_ip_mac_pairs.items():
-            display_host_entry(src_ip, src_mac)  
-             
             
+            # Increment count or add new entry for IP
+            if src_ip in detected_ip_mac_pairs:
+                current_mac, current_count = detected_ip_mac_pairs[src_ip]
+                detected_ip_mac_pairs[src_ip] = (current_mac, current_count + 1)
+            else:
+                detected_ip_mac_pairs[src_ip] = (src_mac, 1)
+            
+            # Display table header once when the first packet is detected
+            if not header_shown:
+                display_table_header(interface, "Passive", len(detected_ip_mac_pairs))   
+                header_shown = True
+
+            # Display each entry in real-time with the updated packet count
+            display_host_entry(src_ip, detected_ip_mac_pairs[src_ip])
+
     print(f"\nListening for ARP traffic on interface: {interface}. Press Ctrl+C to stop.")  
-     
-    # Sniff the user's interface for packets
+    
+    # Sniff for ARP packets
     try:
         sniff(iface=interface, filter="arp", prn=process_packet) 
 
-    except KeyboardInterrupt: # Stops program on Ctrl + C click
+    except KeyboardInterrupt:
         print("\nStopped listening for ARP traffic.")   
         time.sleep(3)
             
     finally:
         if detected_ip_mac_pairs:
-            print("\nSummary of Hosts:") #\n to leave a line spacing
+            print("\nSummary of Hosts:")
             summary_display(interface, "Passive", detected_ip_mac_pairs)
         else:
              print("No ARP packets detected.")
       
-        print("Exiting passive scan.")    
+        print("Exiting passive scan.")       
         
 
 #TASK 3: ACTIVE RECON
@@ -104,7 +109,7 @@ def active_recon(interface):
         if ARP in pkt and pkt[ARP].op == 2:  # ARP reply operation code 
             src_ip = pkt[ARP].psrc           # Source IP address
             src_mac = pkt[ARP].hwsrc         # Source MAC address
-            detected_active_pairs[src_ip] = src_mac  
+            detected_active_pairs[src_ip] = src_mac     
 
             print(f"ARP Reply Received - IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
 
@@ -149,37 +154,47 @@ def active_recon(interface):
 
 # TASK 4: IMPROVED DISPLAY
 
-# Display for when user ends the process
+# Display for when user ends the passive process
 
 def summary_display(interface, mode, hosts):
     # Header with dynamic information
     print(f"Interface: {interface}    Mode: {mode}    Found {len(hosts)} host{'s' if len(hosts) != 1 else ''}")
-    print("-" * 50)
+    print("-" * 70)
 
     # Column headers
-    print(f"{'MAC':<20} {'IP':<15}")
-    print("-" * 50)
-
-    # Display each MAC-IP pair in table format
-    for src_ip, src_mac in hosts.items():
-        print(f"{src_mac:<20} {src_ip:<15}")
-
-    print("-" * 50)
+    if mode == "Passive":
+        print(f"{'MAC':<20} {'IP':<15} {'Host Activity':<10}")
+        print("-" * 70)
+        
+        # Sort hosts by packet count in descending order
+        sorted_hosts = sorted(hosts.items(), key=lambda item: item[1][1], reverse=True)
+        for src_ip, (src_mac, packet_count) in sorted_hosts:
+            print(f"{src_mac:<20} {src_ip:<15} {packet_count:<10}")
+    else:  # for Active mode
+        print(f"{'MAC':<20} {'IP':<15}")
+        print("-" * 70)
+        
+        # Display each MAC-IP pair in table format
+        for src_ip, src_mac in hosts.items():
+            print(f"{src_mac:<20} {src_ip:<15}")
+    
+    print("-" * 70)
+    
 
 # Real-Time Display
-def display_table_header(interface, mode):
+def display_table_header(interface, mode, host_count):
     
   # Display the network scan table header
     
     print(f"Interface: {interface}    Mode: {mode}")
-    print("-" * 50)
+    print("-" * 70)
     print(f"{'MAC':<20} {'IP':<15}")
-    print("-" * 50)
+    print("-" * 70)
 
-def display_host_entry(src_ip, src_mac):
 
-    # Display a single IP-MAC entry in the table
-    
+# Display each host entry
+def display_host_entry(src_ip, data):
+    src_mac, packet_count = data
     print(f"{src_mac:<20} {src_ip:<15}")
 
 
