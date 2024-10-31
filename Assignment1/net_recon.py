@@ -7,6 +7,7 @@ from scapy.all import ARP, sniff, Ether, srp, get_if_addr, get_if_hwaddr
  
 # Variables
 help_shown = False     # To track if help has been shown
+header_shown = False     # To track if header has been shown
 detected_ip_mac_pairs = {} # To store all unique IP and MAC pairs
 
 def help():
@@ -59,22 +60,29 @@ def passive_scan(interface):
    
     # Handles the ARP packets 
     def process_packet(pkt):
+        global header_shown
+
         if ARP in pkt and pkt[ARP].op == 2:  # ARP reply operation code
             src_ip = pkt[ARP].psrc           # Source IP address
             src_mac = pkt[ARP].hwsrc         # Source MAC address
-       
-            detected_ip_mac_pairs[src_ip] = src_mac       
-            print(f"IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
+            detected_ip_mac_pairs[src_ip] = src_mac
+                
+        if header_shown == False:
+            display_table_header(interface, "Passive")   
+            header_shown = True
 
-    print(f"Listening for ARP traffic on interface: {interface}. Press Ctrl+C to stop.")  
-    
-  
+        for src_ip, src_mac in detected_ip_mac_pairs.items():
+            display_host_entry(src_ip, src_mac)  
+             
+            
+    print(f"\nListening for ARP traffic on interface: {interface}. Press Ctrl+C to stop.")  
+     
     # Sniff the user's interface for packets
     try:
         sniff(iface=interface, filter="arp", prn=process_packet) 
 
     except KeyboardInterrupt: # Stops program on Ctrl + C click
-        print("Stopped listening for ARP traffic.")   
+        print("\nStopped listening for ARP traffic.")   
         time.sleep(3)
             
     finally:
@@ -98,7 +106,7 @@ def active_recon(interface):
             src_mac = pkt[ARP].hwsrc         # Source MAC address
             detected_active_pairs[src_ip] = src_mac  
 
-            print(f"ARP Reply Recieved - IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
+            print(f"ARP Reply Received - IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
 
 
     # Get the IP address for interface
@@ -133,8 +141,7 @@ def active_recon(interface):
 
      if detected_active_pairs:
             print("\nActive hosts detected:") #\n to leave a line spacing
-            for ip_address, mac_address in detected_active_pairs.items():
-                    summary_display(interface, "Active", detected_active_pairs)
+            summary_display(interface, "Active", detected_active_pairs)
             time.sleep(5)
      else:
             print("No active hosts detected.")
@@ -158,6 +165,22 @@ def summary_display(interface, mode, hosts):
         print(f"{src_mac:<20} {src_ip:<15}")
 
     print("-" * 50)
+
+# Real-Time Display
+def display_table_header(interface, mode):
+    
+  # Display the network scan table header
+    
+    print(f"Interface: {interface}    Mode: {mode}")
+    print("-" * 50)
+    print(f"{'MAC':<20} {'IP':<15}")
+    print("-" * 50)
+
+def display_host_entry(src_ip, src_mac):
+
+    # Display a single IP-MAC entry in the table
+    
+    print(f"{src_mac:<20} {src_ip:<15}")
 
 
 # MAIN FUNCTION
