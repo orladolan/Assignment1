@@ -1,6 +1,7 @@
 
 # Imports
 import sys
+import os
 import time
 from scapy.all import ARP, sniff, Ether, srp, get_if_addr, get_if_hwaddr
  
@@ -62,13 +63,12 @@ def passive_scan(interface):
             src_ip = pkt[ARP].psrc           # Source IP address
             src_mac = pkt[ARP].hwsrc         # Source MAC address
        
-            detected_ip_mac_pairs[src_ip] = src_mac
+            detected_ip_mac_pairs[src_ip] = src_mac       
+            print(f"IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
 
-            print(f"IP: {src_ip} - MAC: {src_mac}")   # Outputs reply info                    
-         
-            
-    print(f"Listening for ARP traffic on interface: {interface}. Press Ctrl+C to stop.")    
-
+    print(f"Listening for ARP traffic on interface: {interface}. Press Ctrl+C to stop.")  
+    
+  
     # Sniff the user's interface for packets
     try:
         sniff(iface=interface, filter="arp", prn=process_packet) 
@@ -79,16 +79,13 @@ def passive_scan(interface):
             
     finally:
         if detected_ip_mac_pairs:
-            print("Summary of detected devices:")
-            for src_ip, src_mac in detected_ip_mac_pairs.items():
-                    print(f"IP: {src_ip}, MAC: {src_mac}")
-            time.sleep(5)
+            print("\nSummary of Hosts:") #\n to leave a line spacing
+            summary_display(interface, "Passive", detected_ip_mac_pairs)
         else:
              print("No ARP packets detected.")
-             time.sleep(3)
-                
-
-        print("Exiting passive scan.")          
+      
+        print("Exiting passive scan.")    
+        
 
 #TASK 3: ACTIVE RECON
 def active_recon(interface):
@@ -100,6 +97,7 @@ def active_recon(interface):
             src_ip = pkt[ARP].psrc           # Source IP address
             src_mac = pkt[ARP].hwsrc         # Source MAC address
             detected_active_pairs[src_ip] = src_mac  
+
             print(f"ARP Reply Recieved - IP: {src_ip} - MAC: {src_mac}")  # Outputs reply info  
 
 
@@ -108,7 +106,6 @@ def active_recon(interface):
      mac_address = get_if_hwaddr(interface)
 
     # Calculate the network address
-     
      network_prefix = ip_address.rsplit('.', 1)[0]  # Splits for first 3 octets of IP
      print(f"Scanning network: {network_prefix}.0/24")  # Uses a /24 network
 
@@ -137,12 +134,30 @@ def active_recon(interface):
      if detected_active_pairs:
             print("\nActive hosts detected:") #\n to leave a line spacing
             for ip_address, mac_address in detected_active_pairs.items():
-                    print(f"IP: {ip_address}, MAC: {mac_address}")
+                    summary_display(interface, "Active", detected_active_pairs)
             time.sleep(5)
      else:
             print("No active hosts detected.")
             time.sleep(3)
 
+# TASK 4: IMPROVED DISPLAY
+
+# Display for when user ends the process
+
+def summary_display(interface, mode, hosts):
+    # Header with dynamic information
+    print(f"Interface: {interface}    Mode: {mode}    Found {len(hosts)} host{'s' if len(hosts) != 1 else ''}")
+    print("-" * 50)
+
+    # Column headers
+    print(f"{'MAC':<20} {'IP':<15}")
+    print("-" * 50)
+
+    # Display each MAC-IP pair in table format
+    for src_ip, src_mac in hosts.items():
+        print(f"{src_mac:<20} {src_ip:<15}")
+
+    print("-" * 50)
 
 
 # MAIN FUNCTION
