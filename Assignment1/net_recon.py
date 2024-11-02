@@ -27,9 +27,7 @@ def help():
   
     print(usage_text)
 
-# Error handling wrong interfaces
-def is_interface_valid(interface):
-    return interface in get_if_list()
+
 
 # TASK 1
 # Seperate function for processing args for readability
@@ -41,20 +39,22 @@ def process_argument(arg):
         return False  # Makes the system continue to run
     
     elif arg in ["-p", "--passive", "passive", "p"]:
-       interface = input("Enter the interface to listen on (e.g., eth0): ")
-       if not is_interface_valid(interface):
-           print(f"Error: Invalid interface '{interface}'. Please provide a valid interface.")
-           return False
-       passive_scan(interface)
+       interface = input("Enter the interface to listen on (e.g., WiFi / eth0): ")
+       try:
+            passive_scan(interface)  # Attempt to start passive scan on the specified interface
+       except Exception as e:
+            print(f"Error: {e}")  # Catch and print any errors from invalid interfaces
+            return False
        return False   
-    
+
     elif arg in ["-a", "--active", "active", "a"]:
-       interface = input("Enter the interface to listen on (e.g., eth0): ")
-       if not is_interface_valid(interface):
-           print(f"Error: Invalid interface '{interface}'. Please provide a valid interface.")
-           return False
-       active_recon(interface)
-       return False 
+       interface = input("Enter the interface to listen on (e.g., WiFi / eth0): ")
+       try:
+            active_recon(interface)  # Attempt to start passive scan on the specified interface
+       except Exception as e:
+            print(f"Error: {e}")  # Catch and print any errors from invalid interfaces
+            return False
+       return False  
 
     elif arg in ["-e", "--exit", "exit", "e"]:
         print("Exiting the program")

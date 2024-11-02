@@ -24,7 +24,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Assignment1.py" />
     <Compile Include="net_recon.py" />
   </ItemGroup>
   <ItemGroup>
